@@ -1,11 +1,17 @@
+import { Injectable } from '@nestjs/common';
 import { TaskStatus } from './task-status.enum';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { Repository, EntityRepository } from 'typeorm';
+import { Repository, EntityRepository, DataSource } from 'typeorm';
 import { Task } from './task.entity';
 import { GetTaskFilterDto } from './dto/get-task-filter-dto';
 
-@EntityRepository(Task)
+// @EntityRepository(Task)
+@Injectable()
 export class TaskRepository extends Repository<Task> {
+  constructor(private dataSource: DataSource) {
+    super(Task, dataSource.createEntityManager());
+  }
+
   async createTask(createTaskDto: CreateTaskDto): Promise<Task> {
     const { title, description } = createTaskDto;
 
@@ -14,12 +20,11 @@ export class TaskRepository extends Repository<Task> {
       description,
       status: TaskStatus.OPEN,
     });
-
     await this.save(task);
     return task;
   }
 
-  async deleteTask(id): Promise<boolean> {
+  async deleteTask(id: string): Promise<boolean> {
     await this.delete(id);
     return true;
   }
