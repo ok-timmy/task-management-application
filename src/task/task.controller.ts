@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -17,11 +18,18 @@ import { Task } from './task.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/auth/dto/get-user.decorator';
 import { User } from 'src/auth/user.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('task')
 @UseGuards(AuthGuard())
 export class TaskController {
-  constructor(private taskService: TaskService) {}
+  private logger = new Logger('TaskController');
+  constructor(
+    private taskService: TaskService,
+    private configService: ConfigService,
+  ) {
+    console.log(configService.get('TEST_VALUE'));
+  }
 
   //If we have search with filter provided, getTaskWithFilters will be called, otherwise, getAllTasks will be called
   @Get()
@@ -29,6 +37,11 @@ export class TaskController {
     @Query() filterDto: GetTaskFilterDto,
     @GetUser() user: User,
   ): Promise<Task[]> {
+    this.logger.verbose(
+      `User "${
+        user.username
+      }" is receiving all tasks with the filter ${JSON.stringify(filterDto)}`,
+    );
     return this.taskService.getTasks(filterDto, user);
   }
 
@@ -37,6 +50,9 @@ export class TaskController {
     @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<Task> {
+    this.logger.verbose(
+      `User "${user.username}" is receiving task with id ${id}`,
+    );
     return this.taskService.getTaskById(id, user);
   }
 
@@ -45,11 +61,19 @@ export class TaskController {
     @Body() createTaskDto: CreateTaskDto,
     @GetUser() user: User,
   ): Promise<Task> {
+    this.logger.verbose(
+      `User "${user.username}" is creating Task with details ${JSON.stringify(
+        createTaskDto,
+      )}`,
+    );
     return this.taskService.createTask(createTaskDto, user);
   }
 
   @Delete(':id')
   deleteTask(@Param('id') id: string, @GetUser() user: User): Promise<boolean> {
+    this.logger.verbose(
+      `User "${user.username}" is deleting task with id ${id}`,
+    );
     return this.taskService.deleteTask(id, user);
   }
 
