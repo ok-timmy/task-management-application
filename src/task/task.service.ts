@@ -3,22 +3,47 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TaskStatus } from './task-status.enum';
 import { GetTaskFilterDto } from './dto/get-task-filter-dto';
-import { TaskRepository } from './task.repository';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class TaskService {
   constructor(
-    @InjectRepository(TaskRepository)
-    private taskRepository: TaskRepository,
+    @InjectRepository(Task)
+    private taskRepository: Repository<Task>,
   ) {}
 
   getTasks(filterDto: GetTaskFilterDto): Promise<Task[]> {
-    return this.taskRepository.getTasks(filterDto);
+    const query = this.taskRepository.createQueryBuilder('task');
+    const { status, search } = filterDto;
+
+    //do something with status
+    if (status) {
+      query.andWhere('task.status = :status', { status });
+    }
+
+    //do something with search
+    if (search) {
+      query.andWhere(
+        'LOWER(task.title) LIKE LOWER(:search) OR LOWER(task.description) LIKE LOWER(:search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const task = query.getMany();
+    return task;
   }
 
-  createTask(createTaskDto: CreateTaskDto): Promise<Task> {
-    return this.taskRepository.createTask(createTaskDto);
+  async createTask(createTaskDto: CreateTaskDto): Promise<Task> {
+    const { title, description } = createTaskDto;
+
+    const task = this.taskRepository.create({
+      title,
+      description,
+      status: TaskStatus.OPEN,
+    });
+    await this.taskRepository.save(task);
+    return task;
   }
 
   async getTaskById(id: string): Promise<Task> {
@@ -35,10 +60,11 @@ export class TaskService {
     return found;
   }
 
-  deleteTask(id: string): Promise<boolean> {
+  async deleteTask(id: string): Promise<boolean> {
     const found = this.getTaskById(id);
     if (found) {
-      return this.taskRepository.deleteTask(id);
+      await this.taskRepository.delete(id);
+      return true;
     }
   }
 

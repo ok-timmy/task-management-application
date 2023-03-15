@@ -1,6 +1,8 @@
+import { TaskController } from './task/task.controller';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskModule } from './task/task.module';
+import { TaskService } from './task/task.service';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
@@ -18,5 +20,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     AuthModule,
   ],
+  // controllers: [TaskController],
+  // providers: [TaskService],
 })
 export class AppModule {}
