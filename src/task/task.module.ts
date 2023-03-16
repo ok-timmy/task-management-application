@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { TaskController } from './task.controller';
 import { TaskService } from './task.service';
 import { Task } from './task.entity';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
